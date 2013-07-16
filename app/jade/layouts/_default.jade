@@ -1,0 +1,22 @@
+!!! 5
+html.no-js
+  head
+    title hoodie grunt test
+
+    meta(charset='utf-8')
+    meta(http-equiv='X-UA-Compatible', content='IE=edge,chrome=1')
+    meta(name='viewport', content='width=device-width')
+
+    // build:css /styles/main.css
+    link(rel='stylesheet', href='styles/vendor/normalize.css')
+    link(rel='stylesheet', href='styles/main.css')
+    // endbuild
+
+  body
+    block content
+
+    // build:js /scripts/main.js
+    script(src='scripts/vendor/jquery2.min.js')
+    script(src='scripts/vendor/hoodie.js')
+    script(src='scripts/main.js')
+    // endbuild
