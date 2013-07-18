@@ -35,6 +35,6 @@
     "node": ">=0.8.0"
   },
   "scripts": {
-    "start": "node node_modules/hoodie-app/bin/start"
+    "start": "node node_modules/hoodie-app/bin/start --no-open-browser"
   }
 }
