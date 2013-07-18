@@ -1,5 +1,7 @@
 // Generated on<%= (new Date).toISOString().split('T')[0] %> using <%= pkg.name %> <%= pkg.version %>
 'use strict';
+
+// Define Snippets and helper functions
 var lrSnippet = require('grunt-contrib-livereload/lib/utils').livereloadSnippet;
 var proxySnippet = require('grunt-connect-proxy/lib/utils').proxyRequest;
 var mountFolder = function (connect, dir) {
@@ -16,26 +18,25 @@ module.exports = function (grunt) {
   // load all grunt tasks
   require('matchdep').filterDev('grunt-*').forEach(grunt.loadNpmTasks);
 
-  // configurable paths
-  var folders = {
-    app: 'app',
-    www: 'www',
-    tmp: '.tmp'
-  };
-
   grunt.initConfig({
-    folders: folders,
-    bgShell: {
-      hoodieStart: {
-        cmd: 'hoodie start no-open-browser',
-        bg: true,
-        stdout: true
+    folders: {
+      app: 'app',
+      www: 'www',
+      tmp: '.tmp'
+    },
+    hoodie: {
+      start: {
+        options: {
+          callback: function(stack) {
+            grunt.config.set('connect.proxies.0.port', stack.www.port);
+          }
+        }
       }
     },
     watch: {
-      compass: {
-        files: ['<%= folders.app %>/styles/{,*/}*.{scss,sass}'],
-        tasks: ['compass:server']
+      stylus: {
+        files: ['<%= folders.app %>/styles/{,*/}*.styl'],
+        tasks: ['stylus:server']
       },
       livereload: {
         files: [
@@ -44,7 +45,9 @@ module.exports = function (grunt) {
           '{.tmp,<%= folders.app %>}/scripts/{,*/}*.js',
           '<%= folders.app %>/images/{,*/}*.{png,jpg,jpeg,gif,webp,svg}'
         ],
-        tasks: ['livereload']
+        options: {
+          livereload: true
+        }
       },
       jade: {
         files: ['app/jade/{,*/}*.jade', 'app/jade/**/{,*/}*.jade'],
@@ -61,12 +64,12 @@ module.exports = function (grunt) {
         {
           context: '/_api',
           host: 'localhost',
-          port: 6004,
+          port: false,
           https: false,
           changeOrigin: false
         }
       ],
-      livereload: {
+      server: {
         options: {
           middleware: function (connect) {
             return [
@@ -124,21 +127,22 @@ module.exports = function (grunt) {
         }
       }
     },
-    compass: {
+    stylus: {
       options: {
-        sassDir: '<%= folders.app %>/styles',
-        cssDir: '.tmp/styles',
-        imagesDir: '<%= folders.app %>/images',
-        javascriptsDir: '<%= folders.app %>/scripts',
-        fontsDir: '<%= folders.app %>/styles/fonts',
-        importPath: 'app/bower_components',
-        relativeAssets: true
+        paths: ['<%= folders.app %>/styles']
       },
-      www: {},
+      www: {
+        files: {
+          '<%= folders.tmp %>/styles/main.css': ['<%= folders.app %>/styles/main.styl']
+        }
+      },
       server: {
         options: {
-          debugInfo: true
-        }
+          compress: false,
+          linenos: true,
+          firebug: true
+        },
+        files: '<%= stylus.www.files %>'
       }
     },
     jade: {
@@ -146,9 +150,8 @@ module.exports = function (grunt) {
         files: grunt.file.expandMapping(['{,*/}*.jade', '!**/_*'], 'dest', {
           cwd: 'app/jade',
           rename: function (dest, src) {
-
             if (/i18n/.test(src)) {
-              return '<%= folders.tmp %>/' + src.replace(/index.i18n-(.*).jade/, '$1.html');;
+              return '<%= folders.tmp %>/' + src.replace(/index.i18n-(.*).jade/, '$1.html');
             }
 
             return '<%= folders.tmp %>/' + src.replace(/\.jade$/, '.html');
@@ -293,13 +296,13 @@ module.exports = function (grunt) {
     },
     concurrent: {
       server: [
-        'compass:server'
+        'stylus:server'
       ],
       test: [
-        'compass'
+        'stylus:www'
       ],
       www: [
-        'compass:www',
+        'stylus:www',
         'imagemin',
         'svgmin',
         'htmlmin'
@@ -314,12 +317,11 @@ module.exports = function (grunt) {
 
     grunt.task.run([
       'clean:server',
-      'bgShell:hoodieStart',
+      'hoodie',
       'jade',
       'configureProxies',
       'concurrent:server',
-      'livereload-start',
-      'connect:livereload',
+      'connect:server',
       'open',
       'watch'
     ]);
